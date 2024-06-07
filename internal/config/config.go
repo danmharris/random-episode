@@ -5,15 +5,20 @@ import (
 	"strconv"
 )
 
-const DefaultPort = 3000
+const (
+	DefaultPort      = 3000
+	DefaultTMDBToken = ""
+)
 
 type Config struct {
-	Port int
+	Port      int
+	TMDBToken string
 }
 
 func LoadConfigFromEnv() *Config {
 	config := Config{
-		Port: DefaultPort,
+		Port:      DefaultPort,
+		TMDBToken: DefaultTMDBToken,
 	}
 
 	if val := os.Getenv("PORT"); val != "" {
@@ -22,6 +27,10 @@ func LoadConfigFromEnv() *Config {
 			panic(err)
 		}
 		config.Port = port
+	}
+
+	if val := os.Getenv("TMDB_TOKEN"); val != "" {
+		config.TMDBToken = val
 	}
 
 	return &config

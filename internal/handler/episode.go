@@ -27,9 +27,9 @@ func (h *handler) FindRandomEpisode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	episode, err := episode.FindRandomEpisode(h.showData, showID)
+	episode, err := episode.FindRandomEpisode(h.tmdb, showID)
 	if err != nil {
-		res.Error = "Something went wrong"
+		res.Error = err.Error()
 		w.WriteHeader(http.StatusInternalServerError)
 		h.views.RenderView(w, "episode", res)
 		return
