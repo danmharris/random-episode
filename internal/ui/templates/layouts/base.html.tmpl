@@ -1,11 +1,11 @@
-{{ define "base" -}}
+{{ define "base" }}
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{ .Title }}</title>
+        <title>{{ with .Title }}{{ . }} - {{ end }}Random Episode</title>
     </head>
     <body>
         {{ template "content" . }}
     </body>
 </html>
-{{- end }}
+{{ end }}

@@ -1,23 +1,71 @@
 package handler
 
 import (
-	"github.com/danmharris/random-episode/internal/data"
-	"github.com/danmharris/random-episode/internal/view"
-	"github.com/go-chi/chi/v5"
+	"log/slog"
+	"net/http"
+
+	tmdb "github.com/cyruzin/golang-tmdb"
+	"github.com/danmharris/random-episode/internal/ui"
 )
 
-type handler struct {
-	views view.Views
-	tmdb  *data.TMDB
+type Handler struct {
+	server     *http.Server
+	tmdbClient *tmdb.Client
 }
 
-func Setup(tmdb *data.TMDB) chi.Router {
-	router := chi.NewRouter()
-	views := view.ParseViews()
-	h := &handler{views, tmdb}
+func NewHandler(tmdbClient *tmdb.Client) (*Handler, error) {
+	ui.LoadTemplates()
 
-	router.Get("/", h.index)
-	router.Get("/episode/{showID}", h.FindRandomEpisode)
+	handler := &Handler{
+		tmdbClient: tmdbClient,
+	}
 
-	return router
+	router := http.NewServeMux()
+	router.HandleFunc("GET /", handler.index)
+
+	handler.server = &http.Server{
+		Addr:    ":8000",
+		Handler: router,
+	}
+
+	return handler, nil
+}
+
+func (h *Handler) Serve() {
+	slog.Info("starting server", "address", h.server.Addr)
+	h.server.ListenAndServe()
+}
+
+func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
+	type showData struct {
+		Title string
+		ID    int64
+	}
+	q := r.FormValue("q")
+
+	var shows []showData
+	if q != "" {
+		result, _ := h.tmdbClient.GetSearchTVShow(q, nil)
+
+		for _, show := range result.Results {
+			shows = append(shows, showData{
+				Title: show.Name,
+				ID:    show.ID,
+			})
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err := ui.RenderView("index.html.tmpl", w, struct {
+		Title string
+		Query string
+		Shows []showData
+	}{
+		Title: "Home",
+		Query: q,
+		Shows: shows,
+	})
+	if err != nil {
+		slog.Error("error rendering template", "error", err)
+	}
 }

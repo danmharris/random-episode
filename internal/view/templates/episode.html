@@ -1,9 +1,0 @@
-{{ define "content" }}
-{{ with .Error }}
-<em>{{ . }}</em>
-{{ end }}
-{{ with .Episode }}
-<h1>{{ .Title }}</h1>
-<p>{{ .Show.Title }} season {{ .Season }}, epsiode {{ .Episode }}</p>
-{{ end }}
-{{ end }}

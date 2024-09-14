@@ -1,0 +1,18 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<form method="get">
+    <input type="text" value="{{ with .Query }}{{ . }}{{ end }}" name="q">
+    <input type="submit" value="Search">
+</form>
+
+{{ with .Shows }}
+{{ range . }}
+<form method="post" action="/shows">
+    <input type="hidden" value="{{ .ID }}">
+    {{ .Title }}
+    <input type="submit" value="Add">
+</form>
+{{ end }}
+{{ end }}
+{{ end }}

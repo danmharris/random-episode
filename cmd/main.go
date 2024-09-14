@@ -1,27 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-
-	"github.com/danmharris/random-episode/internal/config"
-	"github.com/danmharris/random-episode/internal/data"
+	tmdb "github.com/cyruzin/golang-tmdb"
 	"github.com/danmharris/random-episode/internal/handler"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"os"
 )
 
 func main() {
-	cfg := config.LoadConfigFromEnv()
-
-	tmdb, err := data.NewTMDB(cfg.TMDBToken)
+	tmdbClient, err := tmdb.InitV4(os.Getenv("TMDB_TOKEN"))
 	if err != nil {
 		panic(err)
 	}
 
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	router.Mount("/", handler.Setup(tmdb))
-
-	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), router)
+	handler, _ := handler.NewHandler(tmdbClient)
+	handler.Serve()
 }
