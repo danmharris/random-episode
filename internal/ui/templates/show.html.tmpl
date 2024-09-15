@@ -1,0 +1,7 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<h1>{{ .Title }}</h1>
+
+<a href="/shows/{{ .ID }}/episode">Random Episode</a>
+{{ end }}

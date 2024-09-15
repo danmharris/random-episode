@@ -9,7 +9,7 @@
 {{ with .Shows }}
 {{ range . }}
 <form method="post" action="/shows">
-    <input type="hidden" value="{{ .ID }}">
+    <input type="hidden" value="{{ .ID }}" name="id">
     {{ .Title }}
     <input type="submit" value="Add">
 </form>
