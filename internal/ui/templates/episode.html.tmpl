@@ -4,4 +4,11 @@
 <h1>{{ .Title }}</h1>
 <h2>Season {{ .Season }}, Episode {{ .Episode }}</h2>
 <a href="{{ .Path }}">Try again</a>
+
+<form action="{{ .Path }}" method="POST">
+    <input type="hidden" name="season" value="{{ .Season }}">
+    <input type="hidden" name="episode" value="{{ .Episode }}">
+    <input type="hidden" name="title" value="{{ .Title }}">
+    <input type="submit" value="Mark as watched">
+</form>
 {{ end }}

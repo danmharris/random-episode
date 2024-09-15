@@ -4,4 +4,13 @@
 <h1>{{ .Title }}</h1>
 
 <a href="/shows/{{ .ID }}/episode">Random Episode</a>
+
+{{ with .Watched }}
+<h2>Previously watched</h2>
+<ul>
+    {{ range . }}
+    <li>{{ .Title }} (Season {{ .Season }}, Episode {{ .Episode }})</li>
+    {{ end }}
+</ul>
+{{ end }}
 {{ end }}

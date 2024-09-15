@@ -15,6 +15,15 @@ type Show struct {
 	Title  string
 }
 
+type WatchedEpisode struct {
+	ID        int
+	ShowID    int `db:"show_id"`
+	Season    int
+	Episode   int
+	Title     string
+	Timestamp int
+}
+
 //go:embed migrations/*.sql
 var migrations embed.FS
 

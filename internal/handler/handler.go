@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"database/sql"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	tmdb "github.com/cyruzin/golang-tmdb"
 	"github.com/danmharris/random-episode/internal/db"
@@ -31,6 +33,7 @@ func NewHandler(conn *sqlx.DB, tmdbClient *tmdb.Client) (*Handler, error) {
 	router.HandleFunc("POST /shows", handler.createShow)
 	router.HandleFunc("GET /shows/{id}", handler.showShow)
 	router.HandleFunc("GET /shows/{id}/episode", handler.showEpisode)
+	router.HandleFunc("POST /shows/{id}/episode", handler.createWatchedEpisode)
 
 	handler.server = &http.Server{
 		Addr:    ":8000",
@@ -103,13 +106,18 @@ func (h *Handler) showShow(w http.ResponseWriter, r *http.Request) {
 	var show db.Show
 	h.db.Get(&show, "SELECT * FROM shows WHERE id = ?", id)
 
+	var watched []db.WatchedEpisode
+	h.db.Select(&watched, "SELECT * FROM watched_episodes WHERE show_id = ?", id)
+
 	w.WriteHeader(http.StatusOK)
 	ui.RenderView("show.html.tmpl", w, struct {
-		Title string
-		ID    int
+		Title   string
+		ID      int
+		Watched []db.WatchedEpisode
 	}{
-		Title: show.Title,
-		ID:    show.ID,
+		Title:   show.Title,
+		ID:      show.ID,
+		Watched: watched,
 	})
 }
 
@@ -121,11 +129,30 @@ func (h *Handler) showEpisode(w http.ResponseWriter, r *http.Request) {
 
 	showDetails, _ := h.tmdbClient.GetTVDetails(tmdbID, nil)
 
-	season := rand.Intn(showDetails.NumberOfSeasons)
-	episode := rand.Intn(showDetails.Seasons[season].EpisodeCount)
+	var season int
+	var episode int
+	attempts := 0
+	for {
+		season = rand.Intn(showDetails.NumberOfSeasons)
+		episode = rand.Intn(showDetails.Seasons[season].EpisodeCount)
 
-	season++
-	episode++
+		season++
+		episode++
+
+		var episodeId int
+		err := h.db.Get(&episodeId, "SELECT id FROM watched_episodes WHERE show_id=? AND season=? AND episode=?",
+			r.PathValue("id"), season, episode)
+
+		if err == sql.ErrNoRows {
+			break
+		}
+
+		attempts++
+		if attempts > 4 {
+			slog.Warn("too many attempts to get episode that didn't clash, reusing latest")
+			break
+		}
+	}
 
 	episodeDetails, _ := h.tmdbClient.GetTVEpisodeDetails(tmdbID, season, episode, nil)
 
@@ -141,4 +168,18 @@ func (h *Handler) showEpisode(w http.ResponseWriter, r *http.Request) {
 		Episode: episode,
 		Path:    r.URL.Path,
 	})
+}
+
+func (h *Handler) createWatchedEpisode(w http.ResponseWriter, r *http.Request) {
+	showID, _ := strconv.Atoi(r.PathValue("id"))
+	season, _ := strconv.Atoi(r.FormValue("season"))
+	episode, _ := strconv.Atoi(r.FormValue("episode"))
+	title := r.FormValue("title")
+
+	timestamp := time.Now().Unix()
+
+	h.db.Exec("INSERT INTO watched_episodes (show_id, season, episode, title, timestamp) VALUES (?,?,?,?,?)",
+		showID, season, episode, title, timestamp)
+
+	http.Redirect(w, r, "/shows/"+r.PathValue("id"), http.StatusFound)
 }
