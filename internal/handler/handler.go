@@ -52,27 +52,32 @@ func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.FormValue("q")
 
-	var shows []showData
+	var searchShows []showData
 	if q != "" {
 		result, _ := h.tmdbClient.GetSearchTVShow(q, nil)
 
 		for _, show := range result.Results {
-			shows = append(shows, showData{
+			searchShows = append(searchShows, showData{
 				Title: show.Name,
 				ID:    show.ID,
 			})
 		}
 	}
 
+	var shows []db.Show
+	h.db.Select(&shows, "SELECT * FROM shows")
+
 	w.WriteHeader(http.StatusOK)
 	err := ui.RenderView("index.html.tmpl", w, struct {
-		Title string
-		Query string
-		Shows []showData
+		Title         string
+		Query         string
+		SearchResults []showData
+		Shows         []db.Show
 	}{
-		Title: "Home",
-		Query: q,
-		Shows: shows,
+		Title:         "Home",
+		Query:         q,
+		SearchResults: searchShows,
+		Shows:         shows,
 	})
 	if err != nil {
 		slog.Error("error rendering template", "error", err)
