@@ -107,7 +107,7 @@ func (h *Handler) showShow(w http.ResponseWriter, r *http.Request) {
 	h.db.Get(&show, "SELECT * FROM shows WHERE id = ?", id)
 
 	var watched []db.WatchedEpisode
-	h.db.Select(&watched, "SELECT * FROM watched_episodes WHERE show_id = ?", id)
+	h.db.Select(&watched, "SELECT * FROM watched_episodes WHERE show_id = ? ORDER BY timestamp DESC", id)
 
 	w.WriteHeader(http.StatusOK)
 	ui.RenderView("show.html.tmpl", w, struct {
