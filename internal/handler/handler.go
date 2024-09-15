@@ -134,9 +134,11 @@ func (h *Handler) showEpisode(w http.ResponseWriter, r *http.Request) {
 		Title   string
 		Season  int
 		Episode int
+		Path    string
 	}{
 		Title:   episodeDetails.Name,
 		Season:  season,
 		Episode: episode,
+		Path:    r.URL.Path,
 	})
 }
