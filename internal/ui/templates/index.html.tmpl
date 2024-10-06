@@ -2,16 +2,20 @@
 
 {{ define "content" }}
 <form method="get">
-    <input type="text" value="{{ with .Query }}{{ . }}{{ end }}" name="q">
-    <input type="submit" value="Search">
+    <fieldset role="group">
+        <input type="text" value="{{ with .Query }}{{ . }}{{ end }}" name="q">
+        <input type="submit" value="Search">
+    </fieldset>
 </form>
 
 {{ with .SearchResults }}
 {{ range . }}
 <form method="post" action="/shows">
-    <input type="hidden" value="{{ .ID }}" name="id">
-    {{ .Title }}
-    <input type="submit" value="Add">
+    <fieldset role="group">
+        <input type="hidden" value="{{ .ID }}" name="id">
+        <input type="text" readonly value="{{ .Title }}">
+        <input type="submit" value="Add">
+    </fieldset>
 </form>
 {{ end }}
 {{ end }}
