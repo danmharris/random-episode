@@ -95,7 +95,7 @@ func (h *Handler) createShow(w http.ResponseWriter, r *http.Request) {
 		slog.Error("error getting show details", "error", err)
 	}
 
-	result, _ := h.db.Exec("INSERT INTO shows (tmdb_id, title) VALUES (?, ?)", tmdbID, showDetails.Name)
+	result, _ := h.db.Exec("INSERT INTO shows (tmdb_id, title) VALUES ($1, $2)", tmdbID, showDetails.Name)
 	id, _ := result.LastInsertId()
 	http.Redirect(w, r, "/shows/"+strconv.Itoa(int(id)), http.StatusFound)
 }
@@ -104,10 +104,10 @@ func (h *Handler) showShow(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.PathValue("id"))
 
 	var show db.Show
-	h.db.Get(&show, "SELECT * FROM shows WHERE id = ?", id)
+	h.db.Get(&show, "SELECT * FROM shows WHERE id = $1", id)
 
 	var watched []db.WatchedEpisode
-	h.db.Select(&watched, "SELECT * FROM watched_episodes WHERE show_id = ? ORDER BY timestamp DESC", id)
+	h.db.Select(&watched, "SELECT * FROM watched_episodes WHERE show_id = $1 ORDER BY timestamp DESC", id)
 
 	w.WriteHeader(http.StatusOK)
 	ui.RenderView("show.html.tmpl", w, struct {
@@ -125,7 +125,7 @@ func (h *Handler) showEpisode(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.PathValue("id"))
 
 	var tmdbID int
-	h.db.Get(&tmdbID, "SELECT tmdb_id FROM shows WHERE id = ?", id)
+	h.db.Get(&tmdbID, "SELECT tmdb_id FROM shows WHERE id = $1", id)
 
 	showDetails, _ := h.tmdbClient.GetTVDetails(tmdbID, nil)
 
@@ -140,7 +140,7 @@ func (h *Handler) showEpisode(w http.ResponseWriter, r *http.Request) {
 		episode++
 
 		var episodeId int
-		err := h.db.Get(&episodeId, "SELECT id FROM watched_episodes WHERE show_id=? AND season=? AND episode=?",
+		err := h.db.Get(&episodeId, "SELECT id FROM watched_episodes WHERE show_id=$1 AND season=$2 AND episode=$3",
 			r.PathValue("id"), season, episode)
 
 		if err == sql.ErrNoRows {
@@ -178,7 +178,7 @@ func (h *Handler) createWatchedEpisode(w http.ResponseWriter, r *http.Request) {
 
 	timestamp := time.Now().Unix()
 
-	h.db.Exec("INSERT INTO watched_episodes (show_id, season, episode, title, timestamp) VALUES (?,?,?,?,?)",
+	h.db.Exec("INSERT INTO watched_episodes (show_id, season, episode, title, timestamp) VALUES ($1,$2,$3,$4,$5)",
 		showID, season, episode, title, timestamp)
 
 	http.Redirect(w, r, "/shows/"+r.PathValue("id"), http.StatusFound)

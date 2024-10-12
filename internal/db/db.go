@@ -5,7 +5,7 @@ import (
 	"embed"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	"github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
@@ -27,20 +27,20 @@ type WatchedEpisode struct {
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-func Migrate(conn *sql.DB) error {
+func Migrate(conn *sql.DB, dbName string) error {
 	source, err := iofs.New(migrations, "migrations")
 	if err != nil {
 		return err
 	}
 
-	driver, err := sqlite3.WithInstance(conn, &sqlite3.Config{
-		DatabaseName: "random-episode",
+	driver, err := pgx.WithInstance(conn, &pgx.Config{
+		DatabaseName: dbName,
 	})
 	if err != nil {
 		return err
 	}
 
-	migrate, err := migrate.NewWithInstance("embed", source, "random-episode", driver)
+	migrate, err := migrate.NewWithInstance("embed", source, dbName, driver)
 	if err != nil {
 		return err
 	}

@@ -1,1 +1,1 @@
-CREATE TABLE shows(id INTEGER PRIMARY KEY, tmdb_id INT, title TEXT);
+CREATE TABLE shows(id SERIAL PRIMARY KEY, tmdb_id INT, title TEXT);
