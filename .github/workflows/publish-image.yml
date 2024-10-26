@@ -1,8 +1,11 @@
-name: Publish next Docker image
+name: Publish Docker image
 
 on:
-  push:
-    branches: ['main']
+  workflow_call:
+    inputs:
+      tags:
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -34,8 +37,7 @@ jobs:
         uses: docker/metadata-action@v5.5.1
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=next
+          tags: ${{ inputs.tags }}
 
       - name: Build and push image
         id: push
