@@ -1,0 +1,17 @@
+name: Deploy from release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish-latest:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    uses: ./.github/workflows/publish-image.yml
+    with:
+      tags: |
+        type=ref,event=tag
